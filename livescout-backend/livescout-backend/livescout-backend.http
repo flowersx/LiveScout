@@ -1,0 +1,6 @@
+@livescout_backend_HostAddress = http://localhost:5104
+
+GET {{livescout_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
