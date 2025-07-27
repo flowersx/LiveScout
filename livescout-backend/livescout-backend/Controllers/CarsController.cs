@@ -1,62 +1,138 @@
-﻿// Calea: [NumeProiectBackend]/Controllers/CarsController.cs
-
+﻿// Controllers/CarsController.cs
+using AutoMapper;  // Adăugat pentru AutoMapper (using necesar pentru IMapper)
 using livescout_backend.Models;
+using livescout_backend.Data;
+using livescout_backend.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace LiveScout.Controllers
 {
-    [ApiController] // Indică faptul că este un controller de API
-    [Route("[controller]")] // Definește ruta de bază pentru acest controller, va fi /Cars
+    [ApiController]
+    [Route("[controller]")]
     public class CarsController : ControllerBase
     {
-        // O listă statică pentru a simula baza de date.
-        // Ulterior, vei înlocui acest lucru cu o interacțiune reală cu SSMS.
-        private static List<Car> _cars = new List<Car>
-        {
-            new Car { Id = 1, Brand = "Audi", Model = "A4", Year = 2020, BodyType = "SEDAN" },
-            new Car { Id = 2, Brand = "BMW", Model = "X5", Year = 2022, BodyType = "SUV" },
-            new Car { Id = 3, Brand = "Mercedes-Benz", Model = "C-Class Coupe", Year = 2021, BodyType = "COUPE" },
-            new Car { Id = 4, Brand = "Volkswagen", Model = "Golf", Year = 2019, BodyType = "HATCHBACK" },
-            new Car { Id = 5, Brand = "Audi", Model = "Q7", Year = 2023, BodyType = "SUV" },
-            new Car { Id = 6, Brand = "BMW", Model = "Seria 3", Year = 2020, BodyType = "SEDAN" },
-            new Car { Id = 7, Brand = "Ford", Model = "Focus", Year = 2018, BodyType = "HATCHBACK" },
-            new Car { Id = 8, Brand = "Porsche", Model = "911", Year = 2024, BodyType = "COUPE" },
-            new Car { Id = 9, Brand = "Volvo", Model = "XC60", Year = 2022, BodyType = "SUV" }
-        };
+        private readonly AppDbContext _context;
+        private readonly IMapper _mapper;  // Adăugat pentru AutoMapper: Declară IMapper
 
-        [HttpGet] // Acest atribut indică faptul că această metodă răspunde la cereri GET
-        public IEnumerable<Car> Get(
-            [FromQuery] int? year,       // Parametru opțional pentru filtrarea după An
-            [FromQuery] string? brand,   // Parametru opțional pentru filtrarea după Brand
-            [FromQuery] string? model,   // Parametru opțional pentru filtrarea după Model
-            [FromQuery] string? bodyType // Parametru opțional pentru filtrarea după Tip Caroserie
+        public CarsController(AppDbContext context, IMapper mapper)  // Adăugat pentru AutoMapper: Injectează IMapper în constructor
+        {
+            _context = context;
+            _mapper = mapper;  // Adăugat pentru AutoMapper: Inițializează _mapper
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CarListDto>>> Get(
+            [FromQuery] int? year,
+            [FromQuery] string? brand,
+            [FromQuery] string? model,
+            [FromQuery] string? bodyType,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            [FromQuery] int? maxMileage,
+            [FromQuery] string? fuelType,
+            [FromQuery] string? transmission,
+            [FromQuery] string? color,
+            [FromQuery] bool? isAvailable
         )
         {
-            var cars = _cars.AsEnumerable(); // Începem cu toate mașinile
+            var query = _context.Cars.AsQueryable();
 
-            // Aplică filtrele pe baza parametrilor primiți
-            if (year.HasValue)
+            // Aplică filtrele (neschimbat, dar adaugă paginare în viitor: query = query.Skip(skip).Take(take);)
+
+            if (year.HasValue) query = query.Where(c => c.Year == year.Value);
+            if (!string.IsNullOrEmpty(brand)) query = query.Where(c => c.Brand.Contains(brand));
+            if (!string.IsNullOrEmpty(model)) query = query.Where(c => c.Model.Contains(model));
+            if (!string.IsNullOrEmpty(bodyType)) query = query.Where(c => c.BodyType == bodyType);
+            if (minPrice.HasValue) query = query.Where(c => c.Price >= minPrice.Value);
+            if (maxPrice.HasValue) query = query.Where(c => c.Price <= maxPrice.Value);
+            if (maxMileage.HasValue) query = query.Where(c => c.Mileage <= maxMileage.Value);
+            if (!string.IsNullOrEmpty(fuelType)) query = query.Where(c => c.FuelType == fuelType);
+            if (!string.IsNullOrEmpty(transmission)) query = query.Where(c => c.Transmission == transmission);
+            if (!string.IsNullOrEmpty(color)) query = query.Where(c => c.Color.Contains(color));
+            if (isAvailable.HasValue) query = query.Where(c => c.IsAvailable == isAvailable.Value);
+
+            var cars = await query.ToListAsync();
+
+            // Adăugat pentru AutoMapper: Înlocuiește maparea manuală cu _mapper.Map
+            var dtos = _mapper.Map<IEnumerable<CarListDto>>(cars);
+
+            return Ok(dtos);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CarDetailsDto>> GetCar(int id)
+        {
+            var car = await _context.Cars.FindAsync(id);
+            if (car == null) return NotFound();
+
+            // Adăugat pentru AutoMapper: Înlocuiește maparea manuală cu _mapper.Map
+            var dto = _mapper.Map<CarDetailsDto>(car);
+
+            return Ok(dto);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<CarDetailsDto>> PostCar(CreateCarDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            // Adăugat pentru AutoMapper: Mapare din DTO la entity cu _mapper.Map
+            var car = _mapper.Map<Car>(dto);
+
+            _context.Cars.Add(car);
+            await _context.SaveChangesAsync();
+
+            // Adăugat pentru AutoMapper: Mapare pentru return cu _mapper.Map
+            var responseDto = _mapper.Map<CarDetailsDto>(car);
+
+            return CreatedAtAction(nameof(GetCar), new { id = car.Id }, responseDto);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCar(int id, UpdateCarDto dto)
+        {
+            if (id != dto.Id) return BadRequest("ID mismatch");
+
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var car = await _context.Cars.FindAsync(id);
+            if (car == null) return NotFound();
+
+            // Adăugat pentru AutoMapper: Mapare din DTO la entity existent cu _mapper.Map (actualizează proprietățile)
+            _mapper.Map(dto, car);
+
+            _context.Entry(car).State = EntityState.Modified;
+
+            try
             {
-                cars = cars.Where(c => c.Year == year.Value);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CarExists(id)) return NotFound();
+                throw;
             }
 
-            if (!string.IsNullOrEmpty(brand))
-            {
-                // Folosim Contains și StringComparison.OrdinalIgnoreCase pentru căutare case-insensitive
-                cars = cars.Where(c => c.Brand.Contains(brand, StringComparison.OrdinalIgnoreCase));
-            }
+            return NoContent();
+        }
 
-            if (!string.IsNullOrEmpty(model))
-            {
-                cars = cars.Where(c => c.Model.Contains(model, StringComparison.OrdinalIgnoreCase));
-            }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCar(int id)
+        {
+            var car = await _context.Cars.FindAsync(id);
+            if (car == null) return NotFound();
 
-            if (!string.IsNullOrEmpty(bodyType))
-            {
-                cars = cars.Where(c => c.BodyType.Equals(bodyType, StringComparison.OrdinalIgnoreCase));
-            }
+            _context.Cars.Remove(car);
+            await _context.SaveChangesAsync();
 
-            return cars.ToList(); // Returnează lista filtrată de mașini
+            return NoContent();
+        }
+
+        private bool CarExists(int id)
+        {
+            return _context.Cars.Any(e => e.Id == id);
         }
     }
 }
