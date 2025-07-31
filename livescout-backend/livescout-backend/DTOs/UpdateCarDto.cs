@@ -43,6 +43,8 @@ namespace livescout_backend.DTOs
         [StringLength(30, ErrorMessage = "Culoarea nu poate avea mai mult de 30 de caractere")]
         public string Color { get; set; } = string.Empty;
 
+        public string? ImageUrl { get; set; } = string.Empty;
+
         public bool IsAvailable { get; set; } = true;
     }
 }

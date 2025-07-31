@@ -1,38 +1,76 @@
 <template>
   <div id="app">
-    <CarList />
+    <nav class="navbar">
+      <div class="navbar-content">
+        <router-link to="/">Home</router-link>
+        <router-link to="/search">Search</router-link>
+        <router-link to="/about">About</router-link>
+      </div>
+    </nav>
+    <div class="content">
+      <router-view></router-view>
+    </div>
   </div>
 </template>
 
 <script>
-import CarList from './components/CarList.vue'
-
 export default {
   name: 'App',
-  components: {
-    CarList, // Înregistrează componenta pentru a putea fi folosită în template
-  },
-}
+};
 </script>
 
 <style>
-/* Stiluri globale pentru aplicație */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f0f2f5;
+  background-color: #ffffff;
   min-height: 100vh;
 }
 
 #app {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
   min-height: 100vh;
   display: flex;
-  max-width: none !important;
-  width: 100%;
   flex-direction: column;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%; /* Full lățime */
+  background-color: #007bff;
+  padding: 15px 0; /* Padding vertical, zero lateral */
+  z-index: 1000;
+  display: flex;
+  justify-content: center; /* Centrează conținutul */
+  align-items: center;
+}
+
+.navbar-content {
+  width: 100%;
+  max-width: 1200px; /* Lățime maximă pentru conținut central, ajustabil */
+  display: flex;
+  justify-content: space-around; /* Link-uri distribuite egal pe lățime */
+  align-items: center;
+}
+
+.navbar a {
+  color: rgb(255, 255, 255);
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  padding: 5px 15px; /* Spațiu în jurul fiecărui link */
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.content {
+  margin-top: 60px; /* Spațiu sub navbar */
+  padding: 20px;
+  flex-grow: 1; /* Ocupă spațiul rămas */
+  color: black;
 }
 </style>

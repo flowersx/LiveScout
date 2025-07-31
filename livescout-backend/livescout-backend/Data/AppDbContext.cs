@@ -1,4 +1,4 @@
-﻿// Calea: Data/AppDbContext.cs (creează folderul Data dacă nu există)
+﻿
 using Microsoft.EntityFrameworkCore;
 using livescout_backend.Models;
 
@@ -16,12 +16,12 @@ namespace livescout_backend.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configurează proprietatea Price cu precizia corectă (din codul tău original)
+            
             modelBuilder.Entity<Car>()
                 .Property(c => c.Price)
                 .HasPrecision(18, 2);
 
-            // Configurări pentru proprietățile string (din codul tău original)
+            
             modelBuilder.Entity<Car>()
                 .Property(c => c.Brand)
                 .HasMaxLength(50)
@@ -52,17 +52,16 @@ namespace livescout_backend.Data
                 .HasMaxLength(30)
                 .IsRequired();
 
-            // Adăugat: Configurare pentru câmpul nou ImageUrl (dacă l-ai adăugat în Car.cs)
+            
             modelBuilder.Entity<Car>()
-                .Property(c => c.ImageUrl)
-                .HasMaxLength(500);  // Nullable, deci nu IsRequired()
+                .Property(c => c.ImageUrl);  
 
-            // Adăugat: Index-uri pentru performanță (accelerează filtrările frecvente)
+            
             modelBuilder.Entity<Car>().HasIndex(c => c.Year);
             modelBuilder.Entity<Car>().HasIndex(c => c.Price);
             modelBuilder.Entity<Car>().HasIndex(c => c.Brand);
 
-            // Adăugat: Seed data (date inițiale de test; se inserează automat la migrare)
+            
             modelBuilder.Entity<Car>().HasData(
                 new Car
                 {
@@ -77,7 +76,7 @@ namespace livescout_backend.Data
                     Transmission = "Automată",
                     Color = "Negru",
                     IsAvailable = true,
-                    ImageUrl = "https://via.placeholder.com/300x200?text=BMW+Seria+3"  // Exemplu de valoare implicită
+                    ImageUrl = "https://via.placeholder.com/300x200?text=BMW+Seria+3"  
                 },
                 new Car
                 {
@@ -92,7 +91,7 @@ namespace livescout_backend.Data
                     Transmission = "Manuală",
                     Color = "Alb",
                     IsAvailable = true,
-                    ImageUrl = "https://via.placeholder.com/300x200?text=Audi+A4"  // Exemplu
+                    ImageUrl = "https://via.placeholder.com/300x200?text=Audi+A4"  
                 }
             );
         }

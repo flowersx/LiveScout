@@ -76,18 +76,26 @@ namespace LiveScout.Controllers
         [HttpPost]
         public async Task<ActionResult<CarDetailsDto>> PostCar(CreateCarDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // Adăugat pentru AutoMapper: Mapare din DTO la entity cu _mapper.Map
-            var car = _mapper.Map<Car>(dto);
+                // Adăugat pentru AutoMapper: Mapare din DTO la entity cu _mapper.Map
+                var car = _mapper.Map<Car>(dto);
 
-            _context.Cars.Add(car);
-            await _context.SaveChangesAsync();
+                _context.Cars.Add(car);
+                await _context.SaveChangesAsync();
 
-            // Adăugat pentru AutoMapper: Mapare pentru return cu _mapper.Map
-            var responseDto = _mapper.Map<CarDetailsDto>(car);
+                // Adăugat pentru AutoMapper: Mapare pentru return cu _mapper.Map
+                var responseDto = _mapper.Map<CarDetailsDto>(car);
 
-            return CreatedAtAction(nameof(GetCar), new { id = car.Id }, responseDto);
+                return CreatedAtAction(nameof(GetCar), new { id = car.Id }, responseDto);
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+         
         }
 
         [HttpPut("{id}")]

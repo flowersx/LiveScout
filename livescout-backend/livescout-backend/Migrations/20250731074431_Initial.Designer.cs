@@ -11,8 +11,8 @@ using livescout_backend.Data;
 namespace livescout_backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250727105848_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250731074431_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -53,8 +53,7 @@ namespace livescout_backend.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ImageUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
